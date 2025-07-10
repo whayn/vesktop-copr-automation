@@ -1,0 +1,40 @@
+name: Refresh GitHub Pages RPM repo
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Prepare RPM tree
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y createrepo-c curl jq
+          mkdir -p rpm-repo/el9/{x86_64,aarch64}
+
+      - name: Fetch Vesktop RPMs
+        run: |
+          ver=$(gh release view Vencord/Vesktop --json tagName -q .tagName)
+          curl -L "https://vencord.dev/download/vesktop/amd64/rpm/vesktop-${ver#v}.x86_64.rpm" \
+            -o rpm-repo/el9/x86_64/vesktop-${ver#v}.x86_64.rpm
+          curl -L "https://vencord.dev/download/vesktop/arm64/rpm/vesktop-${ver#v}.aarch64.rpm" \
+            -o rpm-repo/el9/aarch64/vesktop-${ver#v}.aarch64.rpm
+
+      - name: Update repo metadata
+        run: |
+          createrepo_c --update rpm-repo/el9/x86_64
+          createrepo_c --update rpm-repo/el9/aarch64
+          touch rpm-repo/.nojekyll
+
+      - name: Commit & push to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./rpm-repo
+          publish_branch: gh-pages

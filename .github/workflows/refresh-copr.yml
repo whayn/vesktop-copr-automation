@@ -1,0 +1,40 @@
+name: Refresh Copr SRPM
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+
+jobs:
+  copr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo dnf install -y copr-cli rpmdevtools jq
+
+      - name: Set up rpmbuild tree
+        run: |
+          mkdir -p ~/.cache-builds/rpmbuild/{SOURCES,SPECS,SRPMS,BUILD,RPMS}
+          echo '%_topdir %(echo $HOME)/.cache-builds/rpmbuild' >> ~/.rpmmacros
+
+      - name: Refresh sources
+        run: |
+          cd copr
+          ./refresh-sources.sh
+          cp SOURCES/*.rpm ~/.cache-builds/rpmbuild/SOURCES/
+
+      - name: Build SRPM
+        run: |
+          cd copr
+          ver=$(basename ~/.cache-builds/rpmbuild/SOURCES/vesktop-*.x86_64.rpm .x86_64.rpm | cut -d- -f2)
+          rpmbuild -bs vesktop.spec --define "version_override $ver"
+
+      - name: Push to Copr
+        env:
+          COPR_LOGIN: ${{ secrets.COPR_LOGIN }}
+          COPR_TOKEN: ${{ secrets.COPR_TOKEN }}
+        run: |
+          srpm=$(ls ~/.cache-builds/rpmbuild/SRPMS/vesktop-*.src.rpm | tail -1)
+          copr-cli build vesktop "$srpm"
