@@ -50,11 +50,18 @@ jobs:
                 .x86_64.rpm | cut -d- -f2)
           rpmbuild -bs vesktop.spec --define "version_override $ver"
 
+      - name: Restore Copr config
+        run: |
+          mkdir -p ~/.config
+          echo "${{ secrets.COPR_CONFIG_B64 }}" \
+            | base64 --decode \
+            | tar xz -C ~/.config
+            - name: Push to Copr
+              run: |
+                srpm=$(ls ~/.cache-builds/rpmbuild/SRPMS/vesktop-*.src.rpm | tail -1)
+                copr-cli build vesktop "$srpm"
+
       - name: Push to Copr
-        env:
-          # Your Copr creds must be stored in repo secrets
-          COPR_LOGIN: ${{ secrets.COPR_LOGIN }}
-          COPR_TOKEN: ${{ secrets.COPR_TOKEN }}
         run: |
           srpm=$(ls ~/.cache-builds/rpmbuild/SRPMS/vesktop-*.src.rpm | tail -1)
           copr-cli build vesktop "$srpm"
