@@ -1,4 +1,7 @@
 name: Refresh GitHub Pages RPM repo
+permissions:
+  contents: write
+  pages: write
 on:
   schedule:
     - cron: "0 3 * * *"
