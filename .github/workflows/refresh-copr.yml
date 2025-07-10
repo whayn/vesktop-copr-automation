@@ -1,7 +1,6 @@
 name: Refresh Copr SRPM
 permissions:
   contents: read
-
 on:
   schedule:
     - cron: "0 5 * * *"
@@ -10,38 +9,27 @@ on:
 jobs:
   copr:
     runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
-          sudo dnf install -y copr-cli rpmdevtools jq gh
+          sudo dnf install -y copr-cli rpmdevtools jq
 
       - name: Set up rpmbuild tree
         run: |
           mkdir -p ~/.cache-builds/rpmbuild/{SOURCES,SPECS,SRPMS,BUILD,RPMS}
           echo '%_topdir %(echo $HOME)/.cache-builds/rpmbuild' >> ~/.rpmmacros
 
-      - name: Refresh sources via GH CLI
+      - name: Refresh sources
         run: |
           cd copr
-          # get latest tag
-          ver=$(gh release view Vencord/Vesktop --repo Vencord/Vesktop --json tagName -q .tagName)
-          ver=${ver#v}
-          echo "Latest Vesktop release: $ver"
-          # download both RPMs
-          gh release download "$ver" \
-            --repo Vencord/Vesktop \
-            --pattern "vesktop-${ver}.*.rpm" \
-            --dir ~/.cache-builds/rpmbuild/SOURCES
+          ./refresh-sources.sh
+          cp SOURCES/*.rpm ~/.cache-builds/rpmbuild/SOURCES/
 
       - name: Build SRPM
         run: |
           cd copr
-          # extract version from filename
           ver=$(basename ~/.cache-builds/rpmbuild/SOURCES/vesktop-*.x86_64.rpm .x86_64.rpm | cut -d- -f2)
           rpmbuild -bs vesktop.spec --define "version_override $ver"
 
