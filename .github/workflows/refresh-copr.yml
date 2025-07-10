@@ -56,10 +56,6 @@ jobs:
           echo "${{ secrets.COPR_CONFIG_B64 }}" \
             | base64 --decode \
             | tar xz -C ~/.config
-            - name: Push to Copr
-              run: |
-                srpm=$(ls ~/.cache-builds/rpmbuild/SRPMS/vesktop-*.src.rpm | tail -1)
-                copr-cli build vesktop "$srpm"
 
       - name: Push to Copr
         run: |
