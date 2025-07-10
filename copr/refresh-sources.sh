@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# download into your ~/.cache-builds/rpmbuild/SOURCES
+# download into ~/.cache-builds/rpmbuild/SOURCES
 RPMBUILD_ROOT="$HOME/.cache-builds/rpmbuild"
 SOURCES_DIR="$RPMBUILD_ROOT/SOURCES"
 mkdir -p "$SOURCES_DIR"
 
 # Fetch the latest Vesktop tag
 ver="$(gh release view --repo Vencord/Vesktop --json tagName -q .tagName)"
-# strip leading "v"
 ver_no_v="${ver#v}"
 
 # remove any old RPMs, grab the new ones
