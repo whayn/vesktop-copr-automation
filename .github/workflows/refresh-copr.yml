@@ -38,7 +38,8 @@ jobs:
       - name: Refresh sources
         working-directory: copr
         env:
-          RPMBUILD_ROOT: ${{ runner.home }}/.cache-builds/rpmbuild
+          # Allow gh to authenticate
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ./refresh-sources.sh
 
