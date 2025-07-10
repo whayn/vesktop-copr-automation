@@ -37,9 +37,10 @@ jobs:
 
       - name: Refresh sources
         working-directory: copr
+        env:
+          RPMBUILD_ROOT: ${{ runner.home }}/.cache-builds/rpmbuild
         run: |
           ./refresh-sources.sh
-          cp SOURCES/*.rpm ~/.cache-builds/rpmbuild/SOURCES/
 
       - name: Build SRPM
         working-directory: copr
