@@ -1,6 +1,7 @@
 name: Refresh Copr SRPM
 permissions:
   contents: read
+
 on:
   schedule:
     - cron: "0 5 * * *"
@@ -9,12 +10,29 @@ on:
 jobs:
   copr:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
-          sudo dnf install -y copr-cli rpmdevtools jq
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            rpm \
+            rpm-build \
+            rpmdevtools \
+            cpio \
+            curl \
+            jq \
+            gh \
+            python3-pip
+
+          # Install the Copr CLI into $HOME/.local/bin
+          pip3 install --user copr-cli
+
+          # Add pip user bin to PATH for remaining steps
+          echo "PATH=${HOME}/.local/bin:${PATH}" >> $GITHUB_ENV
 
       - name: Set up rpmbuild tree
         run: |
