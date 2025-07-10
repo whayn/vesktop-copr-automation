@@ -11,6 +11,8 @@ jobs:
   copr:
     runs-on: ubuntu-latest
     container: fedora:latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Check out repository
@@ -18,12 +20,13 @@ jobs:
 
       - name: Install dependencies
         run: |
-          # On Fedora container we can use dnf
+          # Use DNF inside the Fedora container
           dnf install -y \
             rpm \
             rpm-build \
             rpmdevtools \
             copr-cli \
+            gh \
             jq \
             curl
 
@@ -41,11 +44,13 @@ jobs:
       - name: Build SRPM
         working-directory: copr
         run: |
-          ver=$(basename ~/.cache-builds/rpmbuild/SOURCES/vesktop-*.x86_64.rpm .x86_64.rpm | cut -d- -f2)
+          ver=$(basename ~/.cache-builds/rpmbuild/SOURCES/vesktop-*.x86_64.rpm \
+                .x86_64.rpm | cut -d- -f2)
           rpmbuild -bs vesktop.spec --define "version_override $ver"
 
       - name: Push to Copr
         env:
+          # Your Copr creds must be stored in repo secrets
           COPR_LOGIN: ${{ secrets.COPR_LOGIN }}
           COPR_TOKEN: ${{ secrets.COPR_TOKEN }}
         run: |
