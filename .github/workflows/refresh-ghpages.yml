@@ -10,8 +10,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -20,16 +18,29 @@ jobs:
       - name: Prepare RPM tree
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y createrepo-c curl jq
+          sudo apt-get install -y createrepo-c curl jq gh
           mkdir -p rpm-repo/el9/{x86_64,aarch64}
 
       - name: Fetch Vesktop RPMs
         run: |
-          ver=$(gh release view Vencord/Vesktop --json tagName -q .tagName)
-          curl -L "https://vencord.dev/download/vesktop/amd64/rpm/vesktop-${ver#v}.x86_64.rpm" \
-            -o rpm-repo/el9/x86_64/vesktop-${ver#v}.x86_64.rpm
-          curl -L "https://vencord.dev/download/vesktop/arm64/rpm/vesktop-${ver#v}.aarch64.rpm" \
-            -o rpm-repo/el9/aarch64/vesktop-${ver#v}.aarch64.rpm
+          # 1. Query the public API for the latest release tag
+          ver=$(curl -s \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/Vencord/Vesktop/releases/latest \
+            | jq -r .tag_name)
+          echo "Latest upstream Vesktop release: $ver"
+
+          # 2. Strip leading "v" from tag if present
+          ver_no_v=${ver#v}
+
+          # 3. Download both architecture RPMs
+          curl -L \
+            "https://vencord.dev/download/vesktop/amd64/rpm/vesktop-${ver_no_v}.x86_64.rpm" \
+            -o rpm-repo/el9/x86_64/vesktop-${ver_no_v}.x86_64.rpm
+
+          curl -L \
+            "https://vencord.dev/download/vesktop/arm64/rpm/vesktop-${ver_no_v}.aarch64.rpm" \
+            -o rpm-repo/el9/aarch64/vesktop-${ver_no_v}.aarch64.rpm
 
       - name: Update repo metadata
         run: |
