@@ -47,6 +47,11 @@ jobs:
           createrepo_c --update rpm-repo/el9/x86_64
           createrepo_c --update rpm-repo/el9/aarch64
           touch rpm-repo/.nojekyll
+          
+      - name: Configure commit identity
+        run: |
+          git config --local user.name 'github-actions[bot]'
+          git config --local user.email 'github-actions[bot]@users.noreply.github.com'
 
       - name: Commit & push to gh-pages
         uses: peaceiris/actions-gh-pages@v3
