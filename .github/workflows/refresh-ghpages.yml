@@ -52,6 +52,3 @@ jobs:
         run: |
           git config --local user.name 'github-actions[bot]'
           git config --local user.email 'github-actions[bot]@users.noreply.github.com'
-          commit_user_name: 'github-actions[bot]'          # override commit author name
-          commit_user_email: 'github-actions[bot]@users.noreply.github.com'  # override commit email
-
